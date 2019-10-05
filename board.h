@@ -63,6 +63,15 @@ public:
 	 * return the reward of the action, or -1 if the action is illegal
 	 */
 	reward slide(unsigned opcode) {
+		//**********
+		for (int r = 0; r < 4; r++) {
+			for (int c = 0; c < 4; c++) {
+				printf("%d ", tile[r][c]);
+			}
+			printf("\n");
+		}
+		//**********/
+		printf("\n");
 		switch (opcode & 0b11) {
 		case 0: return slide_up();
 		case 1: return slide_right();
@@ -77,26 +86,25 @@ public:
 		reward score = 0;
 		for (int r = 0; r < 4; r++) {
 			auto& row = tile[r];
-			int top = 0, hold = 0;
-			for (int c = 0; c < 4; c++) {
-				int tile = row[c];
-				if (tile == 0) continue;
-				row[c] = 0;
-				if (hold) {
-					if (tile == hold) {
-						row[top++] = ++tile;
-						score += (1 << tile);
-						hold = 0;
-					} else {
-						row[top++] = hold;
-						hold = tile;
-					}
-				} else {
-					hold = tile;
+			////
+			for (int c = 0; c < 3; c++) {
+				if (row[c] == 0) {
+					row[c] = row[c+1];
+					row[c+1] = 0;
+				} else if (row[c] == 1 && row[c+1] == 2) {
+					row[c] = 3;
+					row[c+1] = 0;
+				} else if (row[c] == 2 && row[c+1] == 1) {
+					row[c] = 3;
+					row[c+1] = 0;
+				} else if (row[c] == row[c+1]) {
+					row[c]++;
+					row[c+1] = 0;
 				}
 			}
-			if (hold) tile[r][top] = hold;
+			////
 		}
+
 		return (*this != prev) ? score : -1;
 	}
 	reward slide_right() {
