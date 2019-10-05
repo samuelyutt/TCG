@@ -63,14 +63,7 @@ public:
 	 * return the reward of the action, or -1 if the action is illegal
 	 */
 	reward slide(unsigned opcode) {
-		//**********
-		for (int r = 0; r < 4; r++) {
-			for (int c = 0; c < 4; c++) {
-				printf("%d ", tile[r][c]);
-			}
-			printf("\n");
-		}
-		//**********/
+		
 		printf("\n");
 		switch (opcode & 0b11) {
 		case 0: return slide_up();

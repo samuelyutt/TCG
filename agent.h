@@ -65,6 +65,15 @@ public:
 		space({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }), popup(0, 9) {}
 
 	virtual action take_action(const board& after) {
+		//**********
+		printf("environment\n");
+		for (int r = 0; r < 4; r++) {
+			for (int c = 0; c < 4; c++) {
+				printf("%d ", after[r][c]);
+			}
+			printf("\n");
+		}
+		//**********/
 		std::shuffle(space.begin(), space.end(), engine);
 		for (int pos : space) {
 			if (after(pos) != 0) continue;
@@ -89,6 +98,15 @@ public:
 		opcode({ 0, 1, 2, 3 }) {}
 
 	virtual action take_action(const board& before) {
+		//**********
+		printf("player\n");
+		for (int r = 0; r < 4; r++) {
+			for (int c = 0; c < 4; c++) {
+				printf("%d ", before[r][c]);
+			}
+			printf("\n");
+		}
+		//**********/
 		std::shuffle(opcode.begin(), opcode.end(), engine);
 		for (int op : opcode) {
 			board::reward reward = board(before).slide(op);
