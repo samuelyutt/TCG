@@ -90,7 +90,7 @@ public:
 				} else if (row[c] == 2 && row[c+1] == 1) {
 					row[c] = 3;
 					row[c+1] = 0;
-				} else if (row[c] == row[c+1]) {
+				} else if (row[c] > 2 && row[c] == row[c+1]) {
 					row[c]++;
 					row[c+1] = 0;
 				}
