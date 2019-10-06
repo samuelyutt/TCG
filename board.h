@@ -53,7 +53,7 @@ public:
 	 */
 	reward place(unsigned pos, cell tile) {
 		if (pos >= 16) return -1;
-		if (tile != 1 && tile != 2) return -1;
+		if (tile != 1 && tile != 2 && tile != 3) return -1;
 		operator()(pos) = tile;
 		return 0;
 	}
@@ -63,8 +63,6 @@ public:
 	 * return the reward of the action, or -1 if the action is illegal
 	 */
 	reward slide(unsigned opcode) {
-		
-		printf("\n");
 		switch (opcode & 0b11) {
 		case 0: return slide_up();
 		case 1: return slide_right();

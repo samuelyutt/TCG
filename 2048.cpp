@@ -65,14 +65,12 @@ int main(int argc, const char* argv[]) {
 		stat.open_episode(play.name() + ":" + evil.name());
 		episode& game = stat.back();
 		for (int i = 0; i < 8; i++) {
-			printf("2\n");
 			agent& who = game.take_turns(evil, evil);
 			action move = who.take_action(game.state());
-			if (game.apply_action(move) != true) break;
+			if (game.apply_action(move) != true) {printf("1\n"); break;}
 			if (who.check_for_win(game.state())) break;
 		}
 		while (true) {
-			printf("1\n");
 			agent& who = game.take_turns(play, evil);
 			action move = who.take_action(game.state());
 			if (game.apply_action(move) != true) break;

@@ -8,6 +8,9 @@
 #include "board.h"
 #include "action.h"
 
+int operation;
+std::vector<board::cell> bag;
+
 class agent {
 public:
 	agent(const std::string& args = "") {
@@ -65,6 +68,7 @@ public:
 		space({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }), popup(0, 9) {}
 
 	virtual action take_action(const board& after) {
+		printf("op=%d\n", operation);
 		//**********
 		printf("environment\n");
 		for (int r = 0; r < 4; r++) {
@@ -74,10 +78,20 @@ public:
 			printf("\n");
 		}
 		//**********/
+		if (bag.empty()) {
+			for (int i = 1; i <= 3; i++)
+				bag.push_back(i);
+			std::random_shuffle(bag.begin(), bag.end());
+		}
+		board::cell tile = bag.back();
+		bag.pop_back();
+
+		printf("tile=%d\n", tile);
+
 		std::shuffle(space.begin(), space.end(), engine);
 		for (int pos : space) {
 			if (after(pos) != 0) continue;
-			board::cell tile = popup(engine) ? 1 : 2;
+			//board::cell tile = popup(engine) ? 1 : 2;
 			return action::place(pos, tile);
 		}
 		return action();
@@ -110,6 +124,7 @@ public:
 		std::shuffle(opcode.begin(), opcode.end(), engine);
 		for (int op : opcode) {
 			board::reward reward = board(before).slide(op);
+			operation = op;
 			if (reward != -1) return action::slide(op);
 		}
 		return action();
