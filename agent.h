@@ -135,13 +135,26 @@ public:
 			printf("\n");
 		}
 		**********/
+		board::reward bestreward = -1;
+		int bestop = 0;
+		for (int op = 0; op < 4; op++) {
+			board::reward reward = board(before).slide(op);
+			if (reward > bestreward) {
+				bestreward = reward;
+				bestop = op;
+			}
+		}
+		operation = bestop;
+		if (bestreward != -1) return action::slide(bestop);
+		return action();
+		/*
 		std::shuffle(opcode.begin(), opcode.end(), engine);
 		for (int op : opcode) {
 			board::reward reward = board(before).slide(op);
-			operation = op;
+			operation = op;	////
 			if (reward != -1) return action::slide(op);
 		}
-		return action();
+		return action();*/
 	}
 
 private:

@@ -2,6 +2,7 @@
 #include <array>
 #include <iostream>
 #include <iomanip>
+//#include <cmath>
 
 /**
  * array-based board for 2048
@@ -83,15 +84,14 @@ public:
 				if (row[c] == 0) {
 					row[c] = row[c+1];
 					row[c+1] = 0;
-				} else if (row[c] == 1 && row[c+1] == 2) {
+				} else if ((row[c] == 1 && row[c+1] == 2) || (row[c] == 2 && row[c+1] == 1)) {
 					row[c] = 3;
 					row[c+1] = 0;
-				} else if (row[c] == 2 && row[c+1] == 1) {
-					row[c] = 3;
-					row[c+1] = 0;
+					score+=4;
 				} else if (row[c] > 2 && row[c] == row[c+1]) {
 					row[c]++;
 					row[c+1] = 0;
+					score+=row[c]*row[c];
 				}
 			}
 			////
