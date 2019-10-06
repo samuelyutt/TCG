@@ -87,9 +87,23 @@ public:
 		bag.pop_back();
 
 		printf("tile=%d\n", tile);
+		//printf("1 %d %d \n", space[0], space[15]);
+		std::vector<int> legalspace;
+		switch (operation) {
+			//case -1: legalspace = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}; break;
+			case 0: legalspace = {12, 13, 14, 15}; break;
+			case 1: legalspace = {0, 4, 8, 12}; break;
+			case 2: legalspace = {0, 1, 2, 3}; break;
+			case 3: legalspace = {3, 7, 11, 15}; break;
+			default: legalspace = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
-		std::shuffle(space.begin(), space.end(), engine);
-		for (int pos : space) {
+		}
+
+		std::shuffle(legalspace.begin(), legalspace.end(), engine);
+		for (int pos : legalspace)
+			printf("%d ", pos);
+		printf("\n");
+		for (int pos : legalspace) {
 			if (after(pos) != 0) continue;
 			//board::cell tile = popup(engine) ? 1 : 2;
 			return action::place(pos, tile);

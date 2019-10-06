@@ -64,6 +64,8 @@ int main(int argc, const char* argv[]) {
 
 		stat.open_episode(play.name() + ":" + evil.name());
 		episode& game = stat.back();
+		operation = -1;	////
+		bag.clear();	////
 		for (int i = 0; i < 8; i++) {
 			agent& who = game.take_turns(evil, evil);
 			action move = who.take_action(game.state());
