@@ -68,8 +68,8 @@ public:
 		space({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }), popup(0, 9) {}
 
 	virtual action take_action(const board& after) {
-		printf("op=%d\n", operation);
-		//**********
+		//printf("op=%d\n", operation);
+		/**********
 		printf("environment\n");
 		for (int r = 0; r < 4; r++) {
 			for (int c = 0; c < 4; c++) {
@@ -77,7 +77,7 @@ public:
 			}
 			printf("\n");
 		}
-		//**********/
+		**********/
 		if (bag.empty()) {
 			for (int i = 1; i <= 3; i++)
 				bag.push_back(i);
@@ -86,7 +86,7 @@ public:
 		board::cell tile = bag.back();
 		bag.pop_back();
 
-		printf("tile=%d\n", tile);
+		//printf("tile=%d\n", tile);
 		//printf("1 %d %d \n", space[0], space[15]);
 		std::vector<int> legalspace;
 		switch (operation) {
@@ -100,9 +100,9 @@ public:
 		}
 
 		std::shuffle(legalspace.begin(), legalspace.end(), engine);
-		for (int pos : legalspace)
-			printf("%d ", pos);
-		printf("\n");
+		//for (int pos : legalspace)
+		//	printf("%d ", pos);
+		//printf("\n");
 		for (int pos : legalspace) {
 			if (after(pos) != 0) continue;
 			//board::cell tile = popup(engine) ? 1 : 2;
@@ -126,7 +126,7 @@ public:
 		opcode({ 0, 1, 2, 3 }) {}
 
 	virtual action take_action(const board& before) {
-		//**********
+		/**********
 		printf("player\n");
 		for (int r = 0; r < 4; r++) {
 			for (int c = 0; c < 4; c++) {
@@ -134,7 +134,7 @@ public:
 			}
 			printf("\n");
 		}
-		//**********/
+		**********/
 		std::shuffle(opcode.begin(), opcode.end(), engine);
 		for (int op : opcode) {
 			board::reward reward = board(before).slide(op);
