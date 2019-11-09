@@ -85,11 +85,11 @@ public:
                 } else if ((row[c] == 1 && row[c+1] == 2) || (row[c] == 2 && row[c+1] == 1)) {
                     row[c] = 3;
                     row[c+1] = 0;
-                    score+=4;
+                    score+=2;
                 } else if (row[c] > 2 && row[c] == row[c+1]) {
                     row[c]++;
                     row[c+1] = 0;
-                    score+=row[c]*row[c];
+                    score+=row[c];
                 }
             }
             ////

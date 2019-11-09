@@ -78,6 +78,12 @@ protected:
     virtual void init_weights(const std::string& info) {
         net.emplace_back(65536); // create an empty weight table with size 65536
         net.emplace_back(65536); // create an empty weight table with size 65536
+        net.emplace_back(65536); // create an empty weight table with size 65536
+        net.emplace_back(65536); // create an empty weight table with size 65536
+        net.emplace_back(65536); // create an empty weight table with size 65536
+        net.emplace_back(65536); // create an empty weight table with size 65536
+        net.emplace_back(65536); // create an empty weight table with size 65536
+        net.emplace_back(65536); // create an empty weight table with size 65536
         // now net.size() == 2; net[0].size() == 65536; net[1].size() == 65536
     }
     virtual void load_weights(const std::string& path) {
@@ -164,25 +170,118 @@ private:
  * dummy player
  * select a legal action randomly
  */
-class player : public random_agent {
+class player : public weight_agent {
 public:
-    player(const std::string& args = "") : random_agent("name=dummy role=player " + args),
-        opcode({ 0, 1, 2, 3 }) {}
+    player(const std::string& args = "") : weight_agent("name=dummy role=player " + args),
+        opcode({ 0, 1, 2, 3 }) {
+            for (int i=0; i<8; i++) {
+                net.emplace_back(weight(15*15*15*15));
+            }
+        }
+
+    unsigned encode(const board& state, int t0, int t1, int t2, int t3) const {
+        return (state(t0) << 0) | (state(t1) << 4) | (state(t2) << 8) | (state(t3) << 12);
+    }
+
+    float get_board_value(const board& state) const {
+        float v = 0;
+        v += net[0][encode(state, 0, 1, 2, 3)];
+        v += net[1][encode(state, 4, 5, 6, 7)];
+        v += net[2][encode(state, 8, 9, 10, 11)];
+        v += net[3][encode(state, 12, 13, 14, 15)];
+        v += net[4][encode(state, 0, 4, 8, 12)];
+        v += net[5][encode(state, 1, 5, 9, 13)];
+        v += net[6][encode(state, 2, 6, 10, 14)];
+        v += net[7][encode(state, 3, 7, 11, 15)];
+        //printf("f = %f\n", v);
+        return v;
+    }
+
+    void train_weight(board::reward reward) {
+        double alpha = 0.1/8;
+        double v_s = alpha * (get_board_value(next) - get_board_value(previous) + (float)reward/1000);
+        if (reward == -1) v_s = 0;
+        net[0][encode(previous, 0, 1, 2, 3)] += v_s;
+        net[1][encode(previous, 4, 5, 6, 7)] += v_s;
+        net[2][encode(previous, 8, 9, 10, 11)] += v_s;
+        net[3][encode(previous, 12, 13, 14, 15)] += v_s;
+        net[4][encode(previous, 0, 4, 8, 12)] += v_s;
+        net[5][encode(previous, 1, 5, 9, 13)] += v_s;
+        net[6][encode(previous, 2, 6, 10, 14)] += v_s;
+        net[7][encode(previous, 3, 7, 11, 15)] += v_s;
+        // printf("next\n");
+        // for (int r = 0; r < 4; r++) {
+        //         for (int c = 0; c < 4; c++) {
+        //             printf("%d ", next[r][c]);
+        //         }
+        //         printf("\n");
+        //     }
+        //     printf("\n");
+        // printf("previous\n");
+        // for (int r = 0; r < 4; r++) {
+        //         for (int c = 0; c < 4; c++) {
+        //             printf("%d ", previous[r][c]);
+        //         }
+        //         printf("\n");
+        //     }
+        //     printf("\n");
+        //printf("%f %f %d %f\n", get_board_value(next), get_board_value(previous), reward, v_s);
+    }
+
+    virtual void open_episode(const std::string& flag = "") {
+        count = 0;
+    }
 
     virtual action take_action(const board& before) {
-        board::reward bestreward = -1;
-        int bestop = 0;
+        //board::reward bestreward = -1;
+        float bestvalue = -999999999;
+        int bestop = -1;
+        int trv, tr;
         for (int op = 0; op < 4; op++) {
-            board::reward reward = board(before).slide(op);
-            if (reward > bestreward) {
-                bestreward = reward;
+            board temp = before;
+            board::reward reward = temp.slide(op);
+            float value = get_board_value(temp);
+            //float value = 0;
+            trv = reward + value;
+            tr = reward;
+            if (bestop == -1 && reward != -1)
+                bestop = op;
+            if (reward + value > bestvalue && reward != -1) {
+                bestvalue = reward + value;
                 bestop = op;
             }
         }
-        if (bestreward != -1) return action::slide(operation = bestop);
-        return action();
+        if (bestop != -1) {
+            next = before;
+            board::reward reward = next.slide(bestop);
+            if (count) train_weight(reward);
+            previous = next;
+            count++;
+            return action::slide(operation = bestop);
+        } else {
+            train_weight(-1);
+
+
+            //printf("environment\n");
+            // printf("%d %d %d\n", bestop, trv, tr);
+            // for (int r = 0; r < 4; r++) {
+            //     for (int c = 0; c < 4; c++) {
+            //         printf("%d ", before[r][c]);
+            //     }
+            //     printf("\n");
+            // }
+            // printf("\n");
+
+            return action();
+        }
+        //if (reward == -1) printf("---------------------------------------------\n");;
+        //if (reward != -1) return action::slide(operation = bestop);
+        //return action();
     }
 
 private:
     std::array<int, 4> opcode;
+    board previous;
+    board next;
+    int count;
 };
