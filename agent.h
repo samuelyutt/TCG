@@ -13,6 +13,14 @@
 int operation;
 std::vector<board::cell> bag;
 
+const int tuple_count = 4;
+int t_element_count[tuple_count] = {6, 6, 4, 4};
+int tuple[4][6] = { {0, 4, 8, 1, 5, 9},
+                    {1, 5, 9, 2, 6, 10},
+                    {2, 6, 10, 14},
+                    {3, 7, 11, 15}};
+
+/*
 const int tuple_count = 8;
 const int t_element_count = 4;
 int tuple[8][4] = { {0, 1, 2, 3},
@@ -23,7 +31,7 @@ int tuple[8][4] = { {0, 1, 2, 3},
                     {1, 5, 9, 13},
                     {2, 6, 10, 14},
                     {3, 7, 11, 15}};
-
+*/
 class agent {
 public:
     agent(const std::string& args = "") {
@@ -186,12 +194,18 @@ public:
     player(const std::string& args = "") : weight_agent("name=dummy role=player " + args),
         opcode({ 0, 1, 2, 3 }) {
             for (int i=0; i<8; i++) {
-                net.emplace_back(weight(15*15*15*15*15));
+                net.emplace_back(weight(15*15*15*15*15*15*15));
             }
         }
 
-    unsigned encode(const board& state, int t[]) const {
-        return (state(t[0]) << 0) | (state(t[1]) << 4) | (state(t[2]) << 8) | (state(t[3]) << 12);
+    unsigned encode(const board& state, int i) const {
+        int* t = tuple[i];
+        switch (i) {
+            case 0: case 1:
+                return (state(t[0]) << 0) | (state(t[1]) << 4) | (state(t[2]) << 8) | (state(t[3]) << 12) | (state(t[4]) << 16) | (state(t[5]) << 20);
+            default:
+                return (state(t[0]) << 0) | (state(t[1]) << 4) | (state(t[2]) << 8) | (state(t[3]) << 12);
+        }
     }
 
     void reflect_tuple(int i) const {
@@ -199,24 +213,8 @@ public:
                             7, 6, 5, 4, 
                             11, 10, 9, 8, 
                             15, 14, 13, 12};
-        
-        // std::cout << "before: ";
-        // for (int j = 0; j < t_element_count; j++) {
-        //     std::cout << tuple[0][j] << " ";
-        // }
-        // std::cout << std::endl;
-
-        //for (int i = 0; i < tuple_count; i++) {
-            for (int j = 0; j < t_element_count; j++) {
-                tuple[i][j] = reflect[ tuple[i][j] ];
-            }
-        //}
-
-        // std::cout << "after:  ";
-        // for (int j = 0; j < t_element_count; j++) {
-        //     std::cout << tuple[0][j] << " ";
-        // }
-        // std::cout << std::endl << std::endl;
+        for (int j = 0; j < t_element_count[i]; j++) 
+            tuple[i][j] = reflect[ tuple[i][j] ];
     }
 
     void rotate_tuple(int i) const {
@@ -224,24 +222,8 @@ public:
                             2, 6, 10, 14, 
                             1, 5, 9, 13, 
                             0, 4, 8, 12};
-
-        // std::cout << "before: ";
-        // for (int j = 0; j < t_element_count; j++) {
-        //     std::cout << tuple[6][j] << " ";
-        // }
-        // std::cout << std::endl;
-
-        //for (int i = 0; i < tuple_count; i++) {
-            for (int j = 0; j < t_element_count; j++) {
-                tuple[i][j] = rotate[ tuple[i][j] ];
-            }
-        //}
-
-        // std::cout << "after:  ";
-        // for (int j = 0; j < t_element_count; j++) {
-        //     std::cout << tuple[6][j] << " ";
-        // }
-        // std::cout << std::endl << std::endl;
+        for (int j = 0; j < t_element_count[i]; j++)
+            tuple[i][j] = rotate[ tuple[i][j] ];
     }
 
     float get_board_value(const board& state) const {
@@ -251,54 +233,26 @@ public:
                 reflect_tuple(i);
                 for (int rt = 0; rt < 4; rt++) {
                     rotate_tuple(i);
-                    v += net[i][encode(state, tuple[i])];
+                    v += net[i][encode(state, i)];
                 }
             }
         }
-        // for (int i = 0; i < tuple_count; i++)
-        //     v += net[i][encode(state, tuple[i])];
-        //printf("v = %f\n", v);
         return v;
     }
 
     void train_weight(board::reward reward) {
-        double alpha = 0.001;
+        double alpha = 0.003125;
         double v_s = alpha * (get_board_value(next) - get_board_value(previous) + reward);
         if (reward == -1) v_s = alpha * (-get_board_value(previous));
-        //if (reward == -1) printf("terminate ");
-        //printf("v_s %f\n", v_s);
-        //if (reward == -1) v_s = 0;
         for (int i = 0; i < tuple_count; i++) {
             for (int rf = 0; rf < 2; rf++) {
                 reflect_tuple(i);
                 for (int rt = 0; rt < 4; rt++) {
                     rotate_tuple(i);
-                    net[i][encode(previous, tuple[i])] += v_s;
-                    //printf("net = %f\n", net[i][encode(previous, tuple[i])]);
+                    net[i][encode(previous, i)] += v_s;
                 }
             }
         }
-
-
-        // for (int i = 0; i < tuple_count; i++)
-        //     net[i][encode(previous, tuple[i])] += v_s;
-        // printf("next\n");
-        // for (int r = 0; r < 4; r++) {
-        //         for (int c = 0; c < 4; c++) {
-        //             printf("%d ", next[r][c]);
-        //         }
-        //         printf("\n");
-        //     }
-        //     printf("\n");
-        // printf("previous\n");
-        // for (int r = 0; r < 4; r++) {
-        //         for (int c = 0; c < 4; c++) {
-        //             printf("%d ", previous[r][c]);
-        //         }
-        //         printf("\n");
-        //     }
-        //     printf("\n");
-        //printf("%f %f %d %f\n", get_board_value(next), get_board_value(previous), reward, v_s);
     }
 
     virtual void open_episode(const std::string& flag = "") {
@@ -306,17 +260,12 @@ public:
     }
 
     virtual action take_action(const board& before) {
-        //board::reward bestreward = -1;
         float bestvalue = -999999999;
         int bestop = -1;
-        //int trv, tr;
         for (int op = 0; op < 4; op++) {
             board temp = before;
             board::reward reward = temp.slide(op);
             float value = get_board_value(temp);
-            //float value = 0;
-            //trv = reward + value;
-            //tr = reward;
             if (bestop == -1 && reward != -1)
                 bestop = op;
             if (reward + value > bestvalue && reward != -1) {
@@ -324,14 +273,6 @@ public:
                 bestop = op;
             }
         }
-        // for (int r = 0; r < 4; r++) {
-        //     for (int c = 0; c < 4; c++) {
-        //         printf("%d ", before[r][c]);
-        //     }
-        //     printf("\n");
-        // }
-        // printf("\n");
-        // printf("action %d\n", bestop);
         if (bestop != -1) {
             next = before;
             board::reward reward = next.slide(bestop);
@@ -341,23 +282,8 @@ public:
             return action::slide(operation = bestop);
         } else {
             train_weight(-1);
-
-
-            //printf("environment\n");
-            // printf("%d %d %d\n", bestop, trv, tr);
-            // for (int r = 0; r < 4; r++) {
-            //     for (int c = 0; c < 4; c++) {
-            //         printf("%d ", before[r][c]);
-            //     }
-            //     printf("\n");
-            // }
-            // printf("\n");
-
             return action();
         }
-        //if (reward == -1) printf("---------------------------------------------\n");;
-        //if (reward != -1) return action::slide(operation = bestop);
-        //return action();
     }
 
 private:
