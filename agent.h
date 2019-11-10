@@ -186,7 +186,7 @@ public:
     player(const std::string& args = "") : weight_agent("name=dummy role=player " + args),
         opcode({ 0, 1, 2, 3 }) {
             for (int i=0; i<8; i++) {
-                net.emplace_back(weight(15*15*15*15));
+                net.emplace_back(weight(15*15*15*15*15));
             }
         }
 
@@ -264,10 +264,10 @@ public:
     void train_weight(board::reward reward) {
         double alpha = 0.001;
         double v_s = alpha * (get_board_value(next) - get_board_value(previous) + reward);
-        //if (reward == -1) v_s = alpha * (-get_board_value(previous));
+        if (reward == -1) v_s = alpha * (-get_board_value(previous));
         //if (reward == -1) printf("terminate ");
         //printf("v_s %f\n", v_s);
-        if (reward == -1) v_s = 0;
+        //if (reward == -1) v_s = 0;
         for (int i = 0; i < tuple_count; i++) {
             for (int rf = 0; rf < 2; rf++) {
                 reflect_tuple(i);
