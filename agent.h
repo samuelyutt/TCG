@@ -13,6 +13,17 @@
 int operation;
 std::vector<board::cell> bag;
 
+const int tuple_count = 8;
+const int t_element_count = 4;
+int tuple[8][4] = { {0, 1, 2, 3},
+                    {4, 5, 6, 7},
+                    {8, 9, 10, 11},
+                    {12, 13, 14, 15},
+                    {0, 4, 8, 12},
+                    {1, 5, 9, 13},
+                    {2, 6, 10, 14},
+                    {3, 7, 11, 15}};
+
 class agent {
 public:
     agent(const std::string& args = "") {
@@ -179,36 +190,98 @@ public:
             }
         }
 
-    unsigned encode(const board& state, int t0, int t1, int t2, int t3) const {
-        return (state(t0) << 0) | (state(t1) << 4) | (state(t2) << 8) | (state(t3) << 12);
+    unsigned encode(const board& state, int t[]) const {
+        return (state(t[0]) << 0) | (state(t[1]) << 4) | (state(t[2]) << 8) | (state(t[3]) << 12);
+    }
+
+    void reflect_tuple(int i) const {
+        int reflect[16] = { 3, 2, 1, 0,
+                            7, 6, 5, 4, 
+                            11, 10, 9, 8, 
+                            15, 14, 13, 12};
+        
+        // std::cout << "before: ";
+        // for (int j = 0; j < t_element_count; j++) {
+        //     std::cout << tuple[0][j] << " ";
+        // }
+        // std::cout << std::endl;
+
+        //for (int i = 0; i < tuple_count; i++) {
+            for (int j = 0; j < t_element_count; j++) {
+                tuple[i][j] = reflect[ tuple[i][j] ];
+            }
+        //}
+
+        // std::cout << "after:  ";
+        // for (int j = 0; j < t_element_count; j++) {
+        //     std::cout << tuple[0][j] << " ";
+        // }
+        // std::cout << std::endl << std::endl;
+    }
+
+    void rotate_tuple(int i) const {
+        int rotate[16] = {  3, 7, 11, 15,
+                            2, 6, 10, 14, 
+                            1, 5, 9, 13, 
+                            0, 4, 8, 12};
+
+        // std::cout << "before: ";
+        // for (int j = 0; j < t_element_count; j++) {
+        //     std::cout << tuple[6][j] << " ";
+        // }
+        // std::cout << std::endl;
+
+        //for (int i = 0; i < tuple_count; i++) {
+            for (int j = 0; j < t_element_count; j++) {
+                tuple[i][j] = rotate[ tuple[i][j] ];
+            }
+        //}
+
+        // std::cout << "after:  ";
+        // for (int j = 0; j < t_element_count; j++) {
+        //     std::cout << tuple[6][j] << " ";
+        // }
+        // std::cout << std::endl << std::endl;
     }
 
     float get_board_value(const board& state) const {
         float v = 0;
-        v += net[0][encode(state, 0, 1, 2, 3)];
-        v += net[1][encode(state, 4, 5, 6, 7)];
-        v += net[2][encode(state, 8, 9, 10, 11)];
-        v += net[3][encode(state, 12, 13, 14, 15)];
-        v += net[4][encode(state, 0, 4, 8, 12)];
-        v += net[5][encode(state, 1, 5, 9, 13)];
-        v += net[6][encode(state, 2, 6, 10, 14)];
-        v += net[7][encode(state, 3, 7, 11, 15)];
-        //printf("f = %f\n", v);
+        for (int i = 0; i < tuple_count; i++) {
+            for (int rf = 0; rf < 2; rf++) {
+                reflect_tuple(i);
+                for (int rt = 0; rt < 4; rt++) {
+                    rotate_tuple(i);
+                    v += net[i][encode(state, tuple[i])];
+                }
+            }
+        }
+        // for (int i = 0; i < tuple_count; i++)
+        //     v += net[i][encode(state, tuple[i])];
+        //printf("v = %f\n", v);
         return v;
     }
 
     void train_weight(board::reward reward) {
-        double alpha = 0.1/8;
-        double v_s = alpha * (get_board_value(next) - get_board_value(previous) + (float)reward/1000);
+        double alpha = 0.001;
+        double v_s = alpha * (get_board_value(next) - get_board_value(previous) + reward);
+        //if (reward == -1) v_s = alpha * (-get_board_value(previous));
+        //if (reward == -1) printf("terminate ");
+        //printf("v_s %f\n", v_s);
         if (reward == -1) v_s = 0;
-        net[0][encode(previous, 0, 1, 2, 3)] += v_s;
-        net[1][encode(previous, 4, 5, 6, 7)] += v_s;
-        net[2][encode(previous, 8, 9, 10, 11)] += v_s;
-        net[3][encode(previous, 12, 13, 14, 15)] += v_s;
-        net[4][encode(previous, 0, 4, 8, 12)] += v_s;
-        net[5][encode(previous, 1, 5, 9, 13)] += v_s;
-        net[6][encode(previous, 2, 6, 10, 14)] += v_s;
-        net[7][encode(previous, 3, 7, 11, 15)] += v_s;
+        for (int i = 0; i < tuple_count; i++) {
+            for (int rf = 0; rf < 2; rf++) {
+                reflect_tuple(i);
+                for (int rt = 0; rt < 4; rt++) {
+                    rotate_tuple(i);
+                    net[i][encode(previous, tuple[i])] += v_s;
+                    //printf("net = %f\n", net[i][encode(previous, tuple[i])]);
+                }
+            }
+        }
+
+
+        // for (int i = 0; i < tuple_count; i++)
+        //     net[i][encode(previous, tuple[i])] += v_s;
         // printf("next\n");
         // for (int r = 0; r < 4; r++) {
         //         for (int c = 0; c < 4; c++) {
@@ -236,14 +309,14 @@ public:
         //board::reward bestreward = -1;
         float bestvalue = -999999999;
         int bestop = -1;
-        int trv, tr;
+        //int trv, tr;
         for (int op = 0; op < 4; op++) {
             board temp = before;
             board::reward reward = temp.slide(op);
             float value = get_board_value(temp);
             //float value = 0;
-            trv = reward + value;
-            tr = reward;
+            //trv = reward + value;
+            //tr = reward;
             if (bestop == -1 && reward != -1)
                 bestop = op;
             if (reward + value > bestvalue && reward != -1) {
@@ -251,6 +324,14 @@ public:
                 bestop = op;
             }
         }
+        // for (int r = 0; r < 4; r++) {
+        //     for (int c = 0; c < 4; c++) {
+        //         printf("%d ", before[r][c]);
+        //     }
+        //     printf("\n");
+        // }
+        // printf("\n");
+        // printf("action %d\n", bestop);
         if (bestop != -1) {
             next = before;
             board::reward reward = next.slide(bestop);
